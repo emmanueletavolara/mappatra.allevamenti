@@ -1,0 +1,207 @@
+<!-- HTML Structure -->
+<div class="allevamenti-container">
+  <h1>Gestione Allevamenti Sardegna</h1>
+  
+  <!-- Search Form -->
+  <div class="search-section">
+    <input type="text" id="searchInput" placeholder="Cerca allevamento...">
+    <button onclick="searchAllevamenti()">Cerca</button>
+  </div>
+
+  <!-- Results Table -->
+  <div class="results-section">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Comune</th>
+          <th>Provincia</th>
+          <th>Tipo</th>
+          <th>N° Capi</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        <!-- Results will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add New Form -->
+  <div class="add-section">
+    <h2>Aggiungi Nuovo Allevamento</h2>
+    <form id="addForm" onsubmit="saveAllevamento(event)">
+      <input type="text" name="nome" placeholder="Nome" required>
+      <input type="text" name="comune" placeholder="Comune" required>
+      <input type="text" name="provincia" placeholder="Provincia" required>
+      <select name="tipoAllevamento" required>
+        <option value="">Seleziona tipo</option>
+        <option value="bovino">Bovino</option>
+        <option value="ovino">Ovino</option>
+        <option value="caprino">Caprino</option>
+        <option value="suino">Suino</option>
+      </select>
+      <input type="number" name="numeroCapi" placeholder="Numero capi" required>
+      <button type="submit">Salva</button>
+    </form>
+  </div>
+</div>
+
+<style>
+.allevamenti-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.search-section {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.search-section input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.results-section {
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f5f5f5;
+}
+
+.add-section {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+form {
+  display: grid;
+  gap: 15px;
+  max-width: 500px;
+}
+
+input, select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+</style>
+liive
+<script>
+// Database operations from previous code
+const dbOperations = {
+  async search(criteria) {
+    try {
+      const response = await fetch(`/api/allevamenti/search?q=${encodeURIComponent(criteria)}`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error searching:', error);
+      return [];
+    }
+  },
+
+  async save(allevamento) {
+    try {
+      const response = await fetch('/api/allevamenti', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(allevamento)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving:', error);
+      throw error;
+    }
+  }
+};
+
+// UI Functions
+async function searchAllevamenti() {
+  const searchInput = document.getElementById('searchInput');
+  const resultsBody = document.getElementById('resultsBody');
+  
+  const results = await dbOperations.search(searchInput.value);
+  
+  resultsBody.innerHTML = results.map(item => `
+    <tr>
+      <td>${item.nome}</td>
+      <td>${item.comune}</td>
+      <td>${item.provincia}</td>
+      <td>${item.tipoAllevamento}</td>
+      <td>${item.numeroCapi}</td>
+      <td>
+        <button onclick="editAllevamento(${item.id})">Modifica</button>
+        <button onclick="deleteAllevamento(${item.id})">Elimina</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function saveAllevamento(event) {
+  event.preventDefault();
+  const form = event.target;
+  
+  const allevamento = {
+    nome: form.nome.value,
+    comune: form.comune.value,
+    provincia: form.provincia.value,
+    tipoAllevamento: form.tipoAllevamento.value,
+    numeroCapi: parseInt(form.numeroCapi.value)
+  };
+
+  try {
+    await dbOperations.save(allevamento);
+    form.reset();
+    searchAllevamenti(); // Refresh results
+    alert('Allevamento salvato con successo!');
+  } catch (error) {
+    alert('Errore durante il salvataggio');
+  }
+}
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+  searchAllevamenti();
+});
+</script>
+
+
+
